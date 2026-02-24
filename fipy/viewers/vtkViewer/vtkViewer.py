@@ -93,6 +93,20 @@ class VTKViewer(AbstractViewer):
             from enthought.tvtk.misc import write_data
         write_data(self.dataset, filename)
 
+    def raw(self):
+        data = self._data
+
+        from fipy.tools import numerix
+
+        for var in self.vars:
+            name, rank, value = self._nameRankValue(var)
+
+            if not (numerix.array(value.shape) == 0).any():
+                data.get_array(name).to_array()[:] = value
+
+        from tvtk.api import tvtk
+        return tvtk.to_vtk(self.dataset)
+
     def _getSuitableVars(self, vars):
         if type(vars) not in [type([]), type(())]:
             vars = [vars]
