@@ -118,7 +118,8 @@ class VTKViewer(AbstractViewer):
         >>> viewer = VTKViewer(vars=var) # doctest: +TVTK
 
         >>> vtk = viewer.raw() # doctest: +PYVISTA, +TVTK
-        >>> pv.wrap(vtk).plot() # doctest: +PYVISTA
+        >>> pv.wrap(vtk).plot() # doctest: +PYVISTA, +INTERACTIVE
+        >>> viewer._promptForOpinion() # doctest: +TVTK, +INTERACTIVE
         """
         data = self._data
 
@@ -143,41 +144,34 @@ class VTKViewer(AbstractViewer):
         vars = [var for var in vars if var.mesh==vars[0].mesh]
         return vars
 
+    def _test(self):
+        """
+        >>> from fipy import *
+        >>> m = Grid3D(nx=2, ny=1, nz=1)
+        >>> #     m = Grid3D(nx=3, ny=4, nz=5)
+        >>> x, y, z = m.cellCenters
+        >>> v1 = CellVariable(mesh=m, value=x*y*z, name="x*y*z")
+        >>> v2 = CellVariable(mesh=m, value=x*y*y, name="x*y*y")
+
+        >>> v3 = v1.grad
+        >>> v3.name = "v1.grad"
+        >>> v4 = v1.faceGrad
+        >>> v4.name = "v1.faceGrad"
+        >>> v5 = v1.harmonicFaceValue
+        >>> v5.name = "v1.harmonicFaceValue"
+        >>> v6 = v1.arithmeticFaceValue
+        >>> v6.name = "v1.arithmeticFaceValue"
+
+        >>> #     vw = VTKViewer(vars=(v1, v2))
+        >>> #     vw = VTKViewer(vars=(v1, v2, v3)) #, v4, v5, v6))
+        >>> vw = VTKViewer(vars=(v4, v5, v6))
+
+        >>> # vw.plot(filename="face.vtk")
+        """
+
+def _test():
+    import fipy.tests.doctestPlus
+    return fipy.tests.doctestPlus.testmod()
 
 if __name__ == "__main__":
-#     import fipy.tests.doctestPlus
-#     fipy.tests.doctestPlus.execButNoTest()
-
-    from fipy import *
-    m = Grid3D(nx=2, ny=1, nz=1)
-#     m = Grid3D(nx=3, ny=4, nz=5)
-    x, y, z = m.cellCenters
-    v1 = CellVariable(mesh=m, value=x*y*z, name="x*y*z")
-    v2 = CellVariable(mesh=m, value=x*y*y, name="x*y*y")
-
-    v3 = v1.grad
-    v3.name = "v1.grad"
-    v4 = v1.faceGrad
-    v4.name = "v1.faceGrad"
-    v5 = v1.harmonicFaceValue
-    v5.name = "v1.harmonicFaceValue"
-    v6 = v1.arithmeticFaceValue
-    v6.name = "v1.arithmeticFaceValue"
-
-#     vw = VTKViewer(vars=(v1, v2))
-#     vw = VTKViewer(vars=(v1, v2, v3)) #, v4, v5, v6))
-    vw = VTKViewer(vars=(v4, v5, v6))
-
-    vw.plot(filename="face.vtk")
-
-#     m = Grid2D(nx=1, ny=2)
-#     x, y = m.cellCenters
-#     v1 = CellVariable(mesh=m, value=x*y, name="v1")
-#     v2 = CellVariable(mesh=m, value=x*x) #, name="v2")
-#     vw = VTKViewer(vars=(v1, v2))
-
-#     m = Grid1D(nx=10)
-#     x,  = m.cellCenters
-#     v1 = CellVariable(mesh=m, value=x*x, name="v1")
-#     v2 = CellVariable(mesh=m, value=x) #, name="v2")
-#     vw = VTKViewer(vars=(v1, v2))
+    _test()
