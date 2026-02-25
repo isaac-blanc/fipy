@@ -21,9 +21,21 @@ def _checkForTVTK():
         hasTVTK = False
     return hasTVTK
 
+def _checkForPyVista():
+    hasPyVista = True
+    try:
+        import pyvista
+    except Exception:
+        hasPyVista = False
+    return hasPyVista
+
 register_skipper(flag="TVTK",
                  test=_checkForTVTK,
                  why="the `tvtk` package cannot be imported")
+
+register_skipper(flag="PYVISTA",
+                 test=_checkForPyVista,
+                 why="the `pyvista` package cannot be imported")
 
 class VTKViewer(AbstractViewer):
     """Renders :class:`~fipy.variables.meshVariable.MeshVariable` data in VTK format
@@ -94,6 +106,20 @@ class VTKViewer(AbstractViewer):
         write_data(self.dataset, filename)
 
     def raw(self):
+        """
+        >>> from fipy import Grid3D, CellVariable
+        >>> from fipy import VTKViewer # doctest: +TVTK
+        >>> import pyvista as pv # doctest: +PYVISTA
+
+        >>> mesh = Grid3D(dx=1, dy=1, dz=1, nx=10, ny=10, nz=10)
+        >>> var = CellVariable(mesh)
+        >>> var.setValue(1, where=mesh.cellCenters[0] > 5)
+        >>> var.setValue(2, where=mesh.cellCenters[0] <= 5)
+        >>> viewer = VTKViewer(vars=var) # doctest: +TVTK
+
+        >>> vtk = viewer.raw() # doctest: +PYVISTA, +TVTK
+        >>> pv.wrap(vtk).plot() # doctest: +PYVISTA
+        """
         data = self._data
 
         from fipy.tools import numerix
