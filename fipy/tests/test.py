@@ -10,10 +10,15 @@ from typing_extensions import Annotated
 import unittest
 import warnings
 
-from fipy.tests.doctestPlus import _DocTestTimes, report_skips
+from fipy.tests.doctestPlus import _DocTestTimes, report_skips, register_skipper
 from fipy.tools.logging.environment import package_info
 from fipy.tools import numerix
 
+SKIP_INTERACTIVE = True
+
+register_skipper(flag="INTERACTIVE",
+                 test=lambda: not SKIP_INTERACTIVE,
+                 why="interactive tests (viewers) were not requested")
 
 __all__ = ["app"]
 
@@ -65,7 +70,7 @@ class TestCommand(object):
         really_all,
         examples,
         modules,
-        viewers,
+        interactive,
         cache,
         timetests,
         skfmm,
@@ -84,7 +89,7 @@ class TestCommand(object):
         self.really_all = really_all
         self.examples = examples
         self.modules = modules
-        self.viewers = viewers
+        self.interactive = interactive
         self.cache = cache
         self.timetests = timetests
         self.skfmm = skfmm
@@ -117,14 +122,13 @@ class TestCommand(object):
     def set_modules(self):
         if not (self.examples
                 or self.modules
-                or self.viewers
                 or self.module_or_suite):
             self.all = True
         if self.all or self.really_all:
             self.examples = True
             self.modules = True
         if self.really_all:
-            self.viewers = True
+            self.interactive = True
 
 
     @staticmethod
@@ -187,16 +191,6 @@ class TestCommand(object):
         if self.module_or_suite:
             yield self.module_or_suite
 
-        if self.viewers:
-            print("*" * 60)
-            print("*" + "".center(58) + "*")
-            print("*" + "ATTENTION".center(58) + "*")
-            print("*" + "".center(58) + "*")
-            print("*" + "Some of the following tests require user interaction".center(58) + "*")
-            print("*" + "".center(58) + "*")
-            print("*" * 60)
-
-            yield "fipy.viewers.testinteractive._suite"
         if self.modules:
             yield "fipy.testFiPy._suite"
         if self.examples:
@@ -310,7 +304,21 @@ class TestCommand(object):
 
 
     def run_tests(self):
+        global SKIP_INTERACTIVE
+
         self.printPackageInfo()
+
+        if self.interactive:
+            cached_interactive = SKIP_INTERACTIVE
+            SKIP_INTERACTIVE = False
+
+            print("*" * 60)
+            print("*" + "".center(58) + "*")
+            print("*" + "ATTENTION".center(58) + "*")
+            print("*" + "".center(58) + "*")
+            print("*" + "Some of the following tests require user interaction".center(58) + "*")
+            print("*" + "".center(58) + "*")
+            print("*" * 60)
 
         try:
             # Run tests with current working directory on path
@@ -330,6 +338,9 @@ class TestCommand(object):
                 pass
             else:
                 raise
+        finally:
+            if self.interactive:
+                SKIP_INTERACTIVE = cached_interactive
 
         self.save_testtimes()
 
@@ -381,7 +392,7 @@ def main(
         bool,
         Option(help="test FiPy code modules")
     ] = False,
-    viewers: Annotated[
+    interactive: Annotated[
         bool,
         Option(help="test FiPy viewer modules (requires user input)")
     ] = False,
@@ -422,7 +433,7 @@ def main(
         really_all,
         examples,
         modules,
-        viewers,
+        interactive,
         cache,
         timetests,
         skfmm,
